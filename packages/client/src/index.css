@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ldpl-navy: #0a1628;
+  --color-ldpl-blue: #1e3a5f;
+  --color-ldpl-accent: #2563eb;
+  --color-ldpl-gold: #d4a017;
+  --color-ldpl-light: #f0f4f8;
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  @apply bg-ldpl-light text-gray-900 font-sans antialiased;
+}

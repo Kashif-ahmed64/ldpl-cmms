@@ -1,0 +1,954 @@
+LIBERTY DAHARKI POWERS LTD.
+235 MW Power Plant, Daharki, Ghotki, Sindh, Pakistan
+LDPL CMMS
+Computerized Maintenance Management System
+MP2 Replacement — Full Project Specification Document
+Document Info
+Details
+Prepared by
+IT Department — Liberty Daharki Powers Ltd
+Version
+1.0 — Initial Full Specification
+Date
+June 2026
+Classification
+Confidential — Internal Use Only
+Replaces
+MP2 by Datastream / Infor (legacy CMMS)
+Platform
+Desktop Application (Electron.js) + LAN Server
+Database
+PostgreSQL — Local On-Site Server
+Tech Stack
+Electron + React + TypeScript + Node.js + PostgreSQL
+Table of Contents
+TOC \h \o "1-3"
+1. Executive Summary
+Liberty Daharki Powers Ltd currently operates its plant maintenance operations using MP2, a legacy Computerized Maintenance Management System (CMMS) originally developed by Datastream, now discontinued. This software is outdated, runs on obsolete desktop infrastructure, lacks modern UI/UX, has no web or network access, and does not integrate with current operational workflows.
+This document defines the complete specification for LDPL CMMS — a fully custom, modern replacement built specifically for Liberty Daharki Powers Ltd. It will be a desktop application running on the internal LAN, backed by a local PostgreSQL database, with role-based access, full audit trails, and all modules that MP2 provided plus significant modern enhancements.
+Project Goals
+Replace MP2 completely with a modern, maintainable, internally-owned system
+Run entirely on Liberty internal LAN — no external internet dependency
+Full role-based access control across all departments
+Centralized PostgreSQL database on a dedicated on-site server
+Modern desktop UI built with Electron + React (same stack as LDPL Operations Portal)
+Complete audit trails for all actions, approvals, and changes
+Offline-capable — works even when LAN has issues
+Exportable reports in Excel and PDF formats
+2. System Architecture
+2.1 Technology Stack
+Layer
+Technology
+Purpose
+Desktop App Shell
+Electron.js
+Packages web app as native desktop application for Windows
+Frontend UI
+React 19 + TypeScript
+All screens, forms, dashboards — same stack as LDPL Portal
+Styling
+Tailwind CSS
+Modern utility-first styling
+Charts & Analytics
+Recharts
+Maintenance KPIs, cost charts, downtime graphs
+Backend API
+Node.js + Express
+REST API handling all business logic
+Database ORM
+Prisma ORM
+Type-safe database access layer
+Database
+PostgreSQL 16
+All persistent data — runs on dedicated LAN server PC
+Authentication
+JWT + bcrypt
+Secure login, session management, password hashing
+File Storage
+Local filesystem
+Attachments, manuals, images stored on server
+PDF Generation
+Puppeteer / jsPDF
+Work order prints, reports, gate pass documents
+Excel Export
+xlsx (SheetJS)
+Data export for all modules
+Real-time
+Socket.io
+Live notifications for work order updates
+Barcode
+jsBarcode + BarcodeDetector API
+Print and scan asset/WO barcodes
+2.2 Network / LAN Architecture
+LAN Deployment Model
+One dedicated PC acts as the server (runs PostgreSQL + Node.js API 24/7)
+All other PCs on Liberty LAN open the Electron desktop app
+Electron app connects to the server PC via local IP (e.g. 192.168.1.100)
+No internet required — fully self-contained within Liberty network
+Server PC requires: Ubuntu Server / Windows Server, 8GB RAM, 500GB HDD minimum
+UPS required on server PC for power backup at plant site
+Optional: Tailscale VPN for future Islamabad head office connectivity
+2.3 Deployment Components
+Component
+Runs On
+Details
+PostgreSQL Database
+Server PC (dedicated)
+All data — 24/7 running, UPS backed
+Node.js API Server
+Server PC (dedicated)
+REST API on port 3001
+Electron Desktop App
+Each workstation PC
+Installed once, auto-connects to server
+File Storage
+Server PC /uploads folder
+Manuals, photos, attachments
+Backup Script
+Server PC (cron job)
+Nightly DB backup to external HDD
+3. User Roles & Access Control
+LDPL CMMS is fully role-based. Every screen, action, and data record is governed by the user's assigned role. Roles are assigned by the System Administrator and stored in the database.
+Role
+Code
+Who Uses It
+Access Level
+System Administrator
+admin
+IT Department
+Full access — all modules, user management, system config
+Plant Manager / GM
+manager
+Plant GM, Deputy Manager
+Full read + approve WOs, view all reports, cannot delete records
+Maintenance Engineer
+engineer
+Maintenance dept engineers
+Create/close WOs, update equipment, log parts used
+Maintenance Supervisor
+supervisor
+Shift supervisors
+Approve/reject WOs under their section, view reports
+Storekeeper
+storekeeper
+Stores department
+Inventory in/out, purchase requests, GRN entry
+Technician
+technician
+Maintenance technicians
+View assigned WOs, update status, log labor hours
+Viewer / Auditor
+viewer
+Management, auditors
+Read-only access to all modules, export reports
+HOD (Dept Head)
+hod
+Department heads
+Approve purchase requests from their department
+3.1 Permission Matrix
+Module
+Admin
+Manager
+Engineer
+Supervisor
+Storekeeper
+Technician
+Viewer
+Equipment Registry
+Full
+Read+Export
+Create/Edit
+Read
+Read
+Read
+Read
+Work Orders
+Full
+Full
+Create/Close
+Approve
+Read
+Update assigned
+Read
+Preventive Maintenance
+Full
+Read+Export
+Create/Schedule
+Approve
+Read
+Read
+Read
+Inventory / Spare Parts
+Full
+Read+Export
+Request parts
+Read
+Full
+Read
+Read
+Purchasing
+Full
+Approve
+Request
+Read
+Create/Receive
+Read
+Read
+Labor Tracking
+Full
+Read+Export
+Log own hours
+Approve
+Read
+Log own hours
+Read
+Reports & Analytics
+Full
+Full
+Own dept
+Own section
+Inventory only
+Own WOs
+Read
+User Management
+Full
+None
+None
+None
+None
+None
+None
+System Configuration
+Full
+None
+None
+None
+None
+None
+None
+4. System Modules — Full Specification
+4.1 Module 1 — Equipment & Asset Registry
+The Equipment Registry is the foundation of the entire CMMS. Every physical asset at the Liberty plant is registered here before any maintenance activity can be performed on it.
+4.1.1 Asset Hierarchy
+Plant → System → Sub-System → Equipment → Component
+Example: Liberty Plant 235MW → Cooling System → Cooling Tower 1 → Motor CT-01 → Bearing Assembly
+Every asset has a unique Asset Tag Number (auto-generated or manually assigned)
+4.1.2 Equipment Record Fields
+Field
+Type
+Description
+Asset Tag No
+Auto / Manual
+Unique identifier — printed as barcode on asset label
+Asset Name
+Text
+Full descriptive name
+Asset Category
+Dropdown
+Electrical, Mechanical, Civil, Instrumentation, Vehicle, IT
+Make / Manufacturer
+Text
+Equipment brand
+Model
+Text
+Model number
+Serial Number
+Text
+Manufacturer serial
+Purchase Date
+Date
+When acquired
+Purchase Cost
+Currency (PKR)
+Original cost
+Current Value
+Calculated
+Depreciated value
+Location
+Hierarchy picker
+Plant area / building / floor
+Department
+Dropdown
+Owning department
+Assigned To
+User picker
+Responsible engineer/technician
+Status
+Dropdown
+Active, Under Maintenance, Decommissioned, Spare
+Criticality
+Dropdown
+Critical, High, Medium, Low
+Warranty Expiry
+Date
+Alert generated before expiry
+Last Maintenance Date
+Date
+Auto-updated from WOs
+Next Maintenance Due
+Date / KM / Hours
+Calculated from PM schedule
+Meter Reading
+Number + Unit
+KM / Hours / Cycles depending on asset type
+Manufacturer Docs
+File attachment
+PDF manuals, drawings, datasheets
+Asset Photo
+Image
+Photo of the physical equipment
+Barcode / QR Code
+Generated
+Printable label for scanning
+Notes
+Long text
+Free-form notes
+4.1.3 Asset Workflows
+Add new asset → assign tag → print barcode label → attach to equipment physically
+Transfer asset between departments → approval required → history updated
+Decommission asset → reason required → removed from active list but history kept
+Scan barcode anywhere in system → instantly pull up full asset profile
+4.2 Module 2 — Work Order Management
+Work Orders (WOs) are the operational core of the CMMS. Every maintenance task — whether planned or emergency — is managed through a work order.
+4.2.1 Work Order Types
+Type
+Code
+Description
+Priority
+Corrective Maintenance
+CM
+Breakdown / emergency repair
+Critical / High
+Preventive Maintenance
+PM
+Scheduled routine maintenance
+Medium
+Predictive Maintenance
+PdM
+Based on condition monitoring data
+Medium / High
+Inspection
+INS
+Routine inspection with no repair
+Low
+Modification / Improvement
+MOD
+Engineering change or upgrade
+Varies
+Shutdown Work
+SDW
+Planned plant shutdown maintenance
+High
+4.2.2 Work Order Fields
+Field
+Description
+WO Number
+Auto-generated: WO-2026-00001
+WO Type
+CM / PM / PdM / INS / MOD / SDW
+Priority
+Critical / High / Medium / Low
+Asset
+Linked to Equipment Registry
+Problem Description
+Detailed fault or task description
+Reported By
+User who created the WO
+Reported Date/Time
+Auto-stamped
+Assigned To
+Technician / Engineer
+Assigned By
+Supervisor / Engineer
+Estimated Hours
+Expected labor time
+Planned Start Date
+Scheduled start
+Planned End Date
+Scheduled completion
+Actual Start Date/Time
+When work physically started
+Actual End Date/Time
+When work completed
+Status
+Open / Assigned / In Progress / On Hold / Completed / Cancelled
+Parts Used
+Linked to Inventory — deducts stock automatically
+Labor Hours Logged
+Per technician with time entries
+Root Cause
+Filled on completion
+Corrective Action Taken
+What was done
+Work Order Cost
+Calculated: parts cost + labor cost
+Attachments
+Photos before/after, documents
+Supervisor Sign-off
+Required to close WO
+4.2.3 Work Order Workflow
+Step
+Action
+Done By
+System Action
+1
+WO Created (breakdown reported or PM due)
+Any user / Auto
+Status: Open, notification sent
+2
+WO Reviewed and Assigned
+Supervisor / Engineer
+Status: Assigned, technician notified
+3
+Work Started
+Technician
+Status: In Progress, timer starts
+4
+Parts Requested (if needed)
+Technician
+Parts request sent to storekeeper
+5
+Parts Issued from Store
+Storekeeper
+Inventory deducted, WO updated
+6
+Work Completed
+Technician
+Status: Pending Approval, hours logged
+7
+Supervisor Review
+Supervisor
+Inspect work, approve or send back
+8
+WO Closed
+Supervisor / Engineer
+Status: Closed, asset record updated, cost calculated
+4.3 Module 3 — Preventive Maintenance (PM) Scheduling
+Preventive Maintenance is the proactive scheduling of maintenance tasks before equipment fails. This module auto-generates Work Orders when PM is due.
+4.3.1 PM Schedule Types
+Time-based — every X days/weeks/months (e.g. monthly oil change)
+Meter-based — every X hours/KM/cycles (e.g. every 500 hours running time)
+Condition-based — when a parameter exceeds a threshold
+Seasonal — annual or bi-annual overhaul
+4.3.2 PM Template Fields
+Field
+Description
+PM Template Name
+e.g. Monthly Generator Inspection
+Asset / Asset Category
+Applies to single asset or all assets of a type
+Frequency
+Daily / Weekly / Monthly / Quarterly / Annually / By Hours / By KM
+Interval Value
+Number (e.g. every 30 days or every 500 hours)
+Task Checklist
+Step-by-step tasks to perform (multiple rows)
+Estimated Duration
+Expected hours to complete
+Required Skills
+Electrical / Mechanical / Civil etc.
+Required Parts
+Parts typically consumed — auto-checks stock
+Lead Time (days)
+Generate WO X days before due date
+Assigned Department
+Which team performs this PM
+Last Done Date
+Auto-updated when PM WO is closed
+Next Due Date
+Calculated automatically
+Active / Inactive
+Pause a PM schedule without deleting
+4.3.3 PM Automation
+System checks daily at midnight for PMs due within the lead time window
+Auto-generates PM Work Orders and assigns to the configured department
+Sends notification to supervisor and engineer that PM WO is created
+If PM WO not closed by due date — escalation alert sent to Manager
+PM compliance report shows % of PMs completed on time per month
+4.4 Module 4 — Inventory & Spare Parts Management
+Manages all spare parts, consumables, and materials stored in the plant storeroom. Tracks stock levels, issues, and reorder alerts.
+4.4.1 Inventory Item Record
+Field
+Description
+Item Code
+Auto-generated unique code: ITM-00001
+Item Name
+Full descriptive name
+Category
+Mechanical / Electrical / Instrumentation / Consumable / Civil / IT
+Unit of Measure
+Nos / Kg / Litre / Metres / Set / Box
+Current Stock
+Real-time quantity in store
+Minimum Stock Level
+Alert triggered below this
+Maximum Stock Level
+Reorder target
+Reorder Quantity
+How much to order when minimum hit
+Unit Cost (PKR)
+Last purchase price
+Total Stock Value
+Current stock x unit cost
+Location in Store
+Shelf / Bin / Row reference
+Compatible Assets
+Which equipment this part fits
+Preferred Vendor
+Linked to vendor list
+Lead Time (days)
+How long to receive after ordering
+Barcode
+Scannable barcode for quick issue
+Last Received Date
+When last stock came in
+Last Issued Date
+When last issued on a WO
+4.4.2 Inventory Transactions
+Stock Receipt (GRN) — items received from vendor against Purchase Order
+Issue to Work Order — parts issued from store linked to specific WO
+Return to Store — unused parts returned from WO
+Stock Adjustment — physical count correction with reason and approver
+Scrap / Write-off — damaged items removed with HOD approval
+Inter-store Transfer — move items between store locations
+4.4.3 Stock Alerts
+Below minimum stock — alert to storekeeper and HOD daily
+Zero stock for critical item — immediate alert to Manager
+Slow-moving items — items not used in 6+ months flagged
+Expiry alerts — for consumables with expiry dates
+4.5 Module 5 — Purchasing & Procurement
+Manages the full procurement cycle from purchase request to goods receipt. Linked to Inventory for automatic reorder triggers.
+4.5.1 Procurement Workflow
+Step
+Document
+Raised By
+Approved By
+1
+Purchase Requisition (PR)
+Storekeeper / Engineer
+HOD / Supervisor
+2
+Request for Quotation (RFQ)
+Storekeeper / Admin
+Manager
+3
+Comparative Statement
+Storekeeper
+Manager / GM
+4
+Purchase Order (PO)
+Admin / Storekeeper
+Manager / GM
+5
+Goods Received Note (GRN)
+Storekeeper
+Storekeeper confirms receipt
+6
+Invoice Verification
+Admin / Accounts
+Manager
+7
+Stock Updated
+Automatic
+System auto-updates inventory
+4.5.2 Purchase Order Fields
+PO Number (auto: PO-2026-00001), Date, Vendor, Delivery Date
+Line items: Item, Quantity, Unit, Unit Rate, Total Amount
+Terms and conditions, payment terms
+Approved by signature chain
+Linked Purchase Requisition reference
+Status: Draft / Submitted / Approved / Ordered / Partially Received / Closed
+4.5.3 Vendor Management
+Vendor registry: name, address, contact, NTN, bank details
+Vendor category: mechanical, electrical, civil, IT, general
+Vendor performance rating (delivery, quality, price)
+Blacklist flag with reason
+4.6 Module 6 — Labor & Human Resource Tracking
+Tracks technician labor hours against Work Orders, skills, certifications, and shift assignments.
+Feature
+Details
+Labor Time Entry
+Technician logs hours against WO — start time, end time, task description
+Overtime Tracking
+Flags hours beyond standard shift
+Skills Registry
+Each technician's certified skills: electrical, mechanical, welding, etc.
+Certification Tracking
+Expiry dates for safety certifications — alerts before expiry
+Shift Assignment
+Morning / Evening / Night shift schedules
+Workload View
+Visual calendar showing each technician's assigned WOs
+Labor Cost Calculation
+Hours x hourly rate = labor cost per WO
+Training Records
+Training attended, date, result
+Contractor Management
+External contractors: company, contact, WOs assigned
+4.7 Module 7 — Reports & Analytics Dashboard
+Comprehensive reporting and KPI dashboards for all management levels. All reports are filterable, exportable to Excel and PDF.
+4.7.1 KPI Dashboard — Manager / GM View
+Total Open Work Orders — by priority and type
+WO Completion Rate this month (%)
+Mean Time To Repair (MTTR) by asset category
+Mean Time Between Failures (MTBF) by asset
+PM Compliance Rate — % PMs done on time
+Total Maintenance Cost this month (parts + labor)
+Top 10 most maintained assets (breakdown frequency)
+Inventory value on hand
+Pending purchase orders value
+Overdue WOs count
+4.7.2 Standard Reports
+Report Name
+Filters Available
+Format
+Work Order History
+Date range, asset, type, status, assignee
+Excel / PDF
+PM Compliance Report
+Month, department, asset category
+Excel / PDF
+Equipment Downtime Report
+Date range, asset, department
+Excel / PDF
+Maintenance Cost Report
+Month, department, asset, WO type
+Excel / PDF
+Inventory Valuation Report
+Category, location, date
+Excel / PDF
+Stock Movement Report
+Date range, item, transaction type
+Excel / PDF
+Purchase Order Report
+Date range, vendor, status
+Excel / PDF
+Labor Hours Report
+Date range, technician, WO type
+Excel / PDF
+Asset Warranty Expiry
+Next 30/60/90 days
+Excel / PDF
+PM Schedule Forecast
+Next 30/60/90 days
+Excel / PDF
+Vendor Performance Report
+Vendor, date range
+Excel / PDF
+Audit Trail Report
+User, module, date range, action type
+Excel / PDF
+4.8 Module 8 — Notifications & Escalation
+Real-time in-app notifications and escalation rules ensure critical issues are never missed.
+Trigger
+Notified
+Escalation if Ignored
+New Critical WO created
+Supervisor + Engineer + Manager
+Manager after 30 min
+WO overdue (past planned end date)
+Assigned tech + Supervisor
+Manager after 4 hours
+PM due in X days
+Engineer + Supervisor
+Manager if WO not created
+Stock below minimum
+Storekeeper + HOD
+Manager after 24 hours
+Zero stock critical item
+Storekeeper + Manager
+GM immediately
+PO approval pending > 24h
+Approver reminder
+Manager after 48h
+Asset warranty expiring < 30 days
+Engineer + Manager
+-
+Certification expiring < 30 days
+Technician + HR
+Manager after 7 days
+WO completed — awaiting sign-off
+Supervisor
+Manager after 24h
+Budget threshold exceeded
+Manager + GM
+-
+4.9 Module 9 — Document Management
+Central repository for all technical documents, manuals, drawings, and procedures linked to assets and work orders.
+Equipment manuals (PDF) — linked to asset records
+P&ID drawings and engineering drawings
+Standard Operating Procedures (SOPs)
+Safety Data Sheets (SDS/MSDS)
+Calibration certificates
+Inspection reports
+Vendor documents and warranties
+Revision control — version history for all documents
+Access control — sensitive documents visible only to authorized roles
+4.10 Module 10 — Audit Trail & Security
+Every action in the system is logged with timestamp, user, and the before/after values. This module is critical for compliance and accountability.
+4.10.1 Security Measures
+Passwords hashed with bcrypt (minimum cost factor 12) — never stored in plain text
+JWT tokens with 8-hour expiry — auto logout on expiry
+Refresh token rotation — new token issued on each request
+Role-based middleware on every API endpoint — server-side enforcement
+SQL injection prevention via Prisma ORM parameterized queries
+Input validation and sanitization on all form fields
+Rate limiting on login endpoint — 5 failed attempts locks account for 15 minutes
+HTTPS on LAN using self-signed certificate
+Database connection encrypted
+Nightly encrypted database backup to external HDD
+4.10.2 Audit Log Fields
+Field
+Description
+Log ID
+Auto-incremented unique ID
+Timestamp
+Exact date and time of action
+User
+Full name + role
+IP Address
+LAN IP of the workstation
+Module
+Which module was accessed
+Action
+CREATE / READ / UPDATE / DELETE / LOGIN / LOGOUT / EXPORT / PRINT
+Record ID
+ID of the record affected
+Old Value
+JSON snapshot before change
+New Value
+JSON snapshot after change
+Result
+Success / Failed / Blocked
+5. Database Schema Overview
+The database is PostgreSQL 16, hosted on the dedicated on-site server. All tables use UUID primary keys. Soft deletes (deleted_at field) are used instead of hard deletes to preserve history.
+Table Name
+Description
+Key Relations
+users
+All system users with roles
+Referenced by all tables as created_by, assigned_to
+assets
+Equipment registry
+Parent: assets (self-reference for hierarchy)
+asset_meters
+Meter readings history
+FK: assets
+work_orders
+All work orders
+FK: assets, users (assigned_to, created_by)
+wo_labor
+Labor time entries per WO
+FK: work_orders, users
+wo_parts
+Parts used per WO
+FK: work_orders, inventory_items
+wo_attachments
+Photos/docs on WOs
+FK: work_orders
+pm_templates
+PM schedule templates
+FK: assets (or asset_category)
+pm_tasks
+Checklist items per PM template
+FK: pm_templates
+inventory_items
+Spare parts catalog
+FK: vendors
+inventory_transactions
+All stock movements
+FK: inventory_items, work_orders
+purchase_requisitions
+PRs
+FK: users, inventory_items
+purchase_orders
+POs
+FK: vendors, purchase_requisitions
+po_line_items
+PO line items
+FK: purchase_orders, inventory_items
+goods_received_notes
+GRNs
+FK: purchase_orders
+vendors
+Vendor registry
+Referenced by POs and inventory
+departments
+Department list
+Referenced by users, assets, WOs
+notifications
+In-app notifications
+FK: users (recipient)
+audit_logs
+Full audit trail
+FK: users
+documents
+Document management
+FK: assets, work_orders
+certifications
+Staff certifications
+FK: users
+6. Hardware Requirements
+6.1 Server PC (Dedicated — Must Run 24/7)
+Component
+Minimum
+Recommended
+Processor
+Intel Core i3 (8th gen+)
+Intel Core i5 / i7
+RAM
+8 GB
+16 GB
+Storage
+500 GB HDD
+1 TB SSD (faster DB performance)
+Operating System
+Ubuntu Server 22.04 LTS/ Windows
+Ubuntu Server 22.04 LTS/ Windows
+Network
+1 Gbps LAN port
+1 Gbps LAN + WiFi backup
+UPS
+1000VA minimum
+2000VA for 2+ hour backup
+External HDD
+1 TB
+2 TB (for nightly backups)
+Estimated Cost (PKR)
+6.2 Workstation Requirements (Each PC)
+Any PC running Windows 10/11 or Ubuntu Desktop
+4 GB RAM minimum, 8 GB recommended
+Network connected to Liberty LAN (wired preferred)
+Electron app installed once — auto-updates from server
+6.3 Peripheral Devices
+Device
+Purpose
+Est. Cost PKR
+Logitech C920 USB Webcam
+Asset photos, condition photos on WOs
+20,000 – 25,000
+Honeywell USB Barcode Scanner
+Scan asset tags, inventory items, WO barcodes
+12,000 – 18,000
+Xprinter XP-365B Thermal Printer
+Print WO summaries, asset labels with barcodes
+18,000 – 22,000
+USB CNIC Card Reader
+Auto-fill employee data on forms
+3,000 – 6,000
+7. Development Plan
+Development will be done using Cursor AI with Claude, following a phased module-by-module approach. Each phase is fully functional before the next begins.
+Phase
+Modules
+Duration
+Deliverable
+Phase 1 — Foundation
+Project setup, Electron shell, Auth, User management, DB schema
+2 weeks
+Working desktop app with login and roles
+Phase 2 — Assets
+Equipment Registry, Asset hierarchy, Barcode print/scan
+2 weeks
+Full asset database with search and barcode
+Phase 3 — Work Orders
+WO creation, assignment, workflow, labor logging
+3 weeks
+Complete WO lifecycle management
+Phase 4 — PM
+PM templates, scheduling, auto-WO generation
+2 weeks
+Automated PM schedule running
+Phase 5 — Inventory
+Spare parts, stock transactions, alerts
+2 weeks
+Full inventory management
+Phase 6 — Purchasing
+PR, PO, GRN, vendor management
+2 weeks
+Complete procurement workflow
+Phase 7 — Reports
+All dashboards, KPIs, reports, Excel/PDF export
+2 weeks
+Management reporting suite
+Phase 8 — Security
+Audit trail, bcrypt, JWT, backup scripts
+1 week
+Production-ready security
+Phase 9 — Testing
+Full system testing, bug fixes, user training
+2 weeks
+Signed-off production system
+Total
+~18 weeks
+Full CMMS replacing MP2
+Integration with LDPL Operations Portal
+LDPL CMMS and the existing LDPL Operations Portal (gate pass / vehicle management) share the same tech stack
+In future phases, the two systems can share a single PostgreSQL database
+Vehicle maintenance data from the Operations Portal can feed into CMMS asset records
+Single sign-on (SSO) possible — one login for both systems
+Both run on the same LAN server PC, saving hardware costs
+8. Future Roadmap
+Feature
+Description
+Priority
+Mobile App
+React Native app for technicians to update WOs on phone/tablet
+High
+Islamabad Head Office
+Same codebase, separate branch, connected via Tailscale VPN
+Medium
+IoT Integration
+Sensor data feeds (temperature, vibration) trigger PdM WOs automatically
+Medium
+Energy Management
+Track fuel consumption, electricity, water per asset/area
+Medium
+Budget Management
+Annual maintenance budget vs actual spend tracking
+High
+KPI Benchmarking
+Compare plant performance against industry standards
+Low
+Email Notifications
+Real email alerts via SMTP / Resend when internet available
+Medium
+Contractor Portal
+Limited web access for external contractors to view/update their WOs
+Low
+9. Glossary
+Term
+Definition
+CMMS
+Computerized Maintenance Management System
+WO
+Work Order — a formal document authorizing and tracking a maintenance task
+PM
+Preventive Maintenance — scheduled maintenance to prevent failure
+CM
+Corrective Maintenance — repair after failure has occurred
+PdM
+Predictive Maintenance — maintenance based on condition monitoring data
+MTTR
+Mean Time To Repair — average time to fix a breakdown
+MTBF
+Mean Time Between Failures — average time between breakdowns
+GRN
+Goods Received Note — document confirming receipt of purchased goods
+PO
+Purchase Order — formal order sent to vendor
+PR
+Purchase Requisition — internal request to purchase items
+BOM
+Bill of Materials — list of parts needed for a task
+SOP
+Standard Operating Procedure
+LAN
+Local Area Network — Liberty internal network
+JWT
+JSON Web Token — secure authentication token
+ORM
+Object-Relational Mapper — Prisma used for database access
+UUID
+Universally Unique Identifier — used as primary keys in database
+End of Document — LDPL CMMS Full Specification v1.0
+Liberty Daharki Powers Ltd — IT Department — Confidential

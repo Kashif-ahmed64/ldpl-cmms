@@ -1,0 +1,39 @@
+{
+  "name": "ldpl-cmms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LDPL CMMS — Computerized Maintenance Management System",
+  "workspaces": [
+    "packages/server",
+    "packages/client",
+    "packages/desktop"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,vite,desktop -c blue,green,magenta \"npm run dev -w @ldpl/cmms-server\" \"npm run dev -w @ldpl/cmms-client\" \"wait-on http://localhost:5173 && npm run dev -w @ldpl/cmms-desktop\"",
+    "dev:server": "npm run dev -w @ldpl/cmms-server",
+    "start": "concurrently -n server,desktop -c blue,magenta \"npm run start -w @ldpl/cmms-server\" \"npm run start -w @ldpl/cmms-desktop\"",
+    "start:server": "npm run start -w @ldpl/cmms-server",
+    "start:desktop": "npm run start -w @ldpl/cmms-desktop",
+    "setup:server": "bash scripts/setup-server.sh",
+    "build": "npm run build -w @ldpl/cmms-client && npm run build -w @ldpl/cmms-server && npm run build -w @ldpl/cmms-desktop",
+    "build:release": "bash scripts/build-release.sh",
+    "package:win": "npm run build -w @ldpl/cmms-client && npm run build -w @ldpl/cmms-desktop && npm run package:win -w @ldpl/cmms-desktop",
+    "package:linux": "npm run build -w @ldpl/cmms-client && npm run build -w @ldpl/cmms-desktop && npm run package:linux -w @ldpl/cmms-desktop",
+    "db:generate": "npm run db:generate -w @ldpl/cmms-server",
+    "db:migrate": "npm run db:migrate -w @ldpl/cmms-server",
+    "db:migrate:deploy": "npm run db:migrate:deploy -w @ldpl/cmms-server",
+    "db:seed": "npm run db:seed -w @ldpl/cmms-server",
+    "db:setup": "npm run db:generate -w @ldpl/cmms-server && npm run db:migrate -w @ldpl/cmms-server && npm run db:seed -w @ldpl/cmms-server",
+    "db:setup:prod": "npm run db:generate -w @ldpl/cmms-server && npm run db:migrate:deploy -w @ldpl/cmms-server && npm run db:seed -w @ldpl/cmms-server",
+    "backup": "bash scripts/backup-db.sh",
+    "test": "npm run test -w @ldpl/cmms-server",
+    "smoke-test": "node scripts/smoke-test.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "wait-on": "^8.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

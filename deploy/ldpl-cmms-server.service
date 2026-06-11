@@ -1,0 +1,23 @@
+[Unit]
+Description=LDPL CMMS API Server
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=cmms
+Group=cmms
+WorkingDirectory=/opt/ldpl-cmms
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/ldpl-cmms/.env
+ExecStart=/usr/bin/npm run start -w @ldpl/cmms-server
+Restart=on-failure
+RestartSec=10
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/ldpl-cmms/uploads /opt/ldpl-cmms/backups /opt/ldpl-cmms/packages/server/uploads /opt/ldpl-cmms/packages/server/backups
+
+[Install]
+WantedBy=multi-user.target

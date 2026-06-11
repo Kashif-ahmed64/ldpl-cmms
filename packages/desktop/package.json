@@ -1,0 +1,58 @@
+{
+  "name": "@ldpl/cmms-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LDPL CMMS Electron desktop shell",
+  "author": "Liberty Daharki Powers Ltd",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsc && electron . --dev",
+    "start": "electron .",
+    "build": "tsc",
+    "package": "npm run build && electron-builder",
+    "package:win": "npm run build && electron-builder --win",
+    "package:linux": "npm run build && electron-builder --linux"
+  },
+  "dependencies": {
+    "electron-store": "^10.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "electron": "36.9.5",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3"
+  },
+  "build": {
+    "appId": "com.ldpl.cmms",
+    "productName": "LDPL CMMS",
+    "electronVersion": "36.9.5",
+    "directories": {
+      "output": "out"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../client/dist",
+        "to": "client",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "executableName": "LDPL-CMMS"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Office",
+      "executableName": "ldpl-cmms"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
