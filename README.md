@@ -27,47 +27,6 @@ packages/
 - Node.js 20+
 - PostgreSQL 14+ (local or LAN server)
 
-## Quick Start (Ubuntu Dev)
-
-### 1. Install dependencies
-
-```bash
-cd "/home/kashif/Desktop/LIBERTY Tool MGT"
-npm install
-```
-
-### 2. Configure environment
-
-```bash
-cp .env.example .env
-# Edit DATABASE_URL if needed
-```
-
-### 3. Create PostgreSQL database
-
-Database name: **`ldpl_cmms_db`** (already created on your machine)
-
-```bash
-# If setting up fresh on another machine:
-sudo -u postgres psql -c "CREATE DATABASE ldpl_cmms_db OWNER kashif;"
-```
-
-### 4. Run migrations and seed
-
-```bash
-npm run db:setup
-```
-
-### 5. Start the desktop application
-
-```bash
-# Development — opens Electron window (API + UI bundled in desktop shell)
-npm run dev
-
-# Production — after build, run API + desktop app
-npm run build
-npm run start
-```
 
 The app runs **only as a desktop application** (Electron). Do not open a browser manually.
 
